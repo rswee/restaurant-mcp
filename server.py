@@ -1,5 +1,6 @@
 from mcp.server.fastmcp import FastMCP
 import dns.resolver
+import requests
 
 mcp = FastMCP("Restaurant Health Checker")
 
@@ -31,5 +32,37 @@ def check_dns(domain: str) -> dict:
         }
 
 
+@mcp.tool()
+def check_website(url: str) -> dict:
+    """Check whether a website is responding."""
+    url = url.strip()
+
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    try:
+        response = requests.get(
+            url,
+            timeout=10,
+            allow_redirects=True,
+            headers={"User-Agent": "RestaurantHealthChecker/1.0"},
+        )
+
+        return {
+            "url": url,
+            "status_code": response.status_code,
+            "reachable": True,
+            "healthy": response.status_code < 400,
+            "final_url": response.url,
+        }
+
+    except requests.RequestException as error:
+        return {
+            "url": url,
+            "reachable": False,
+            "healthy": False,
+            "error": str(error),
+        }
+        
 if __name__ == "__main__":
     mcp.run()
