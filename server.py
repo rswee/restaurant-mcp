@@ -2,6 +2,72 @@ from mcp.server.fastmcp import FastMCP
 import dns.resolver
 import requests
 
+from starlette.responses import HTMLResponse
+
+@mcp.custom_route("/dashboard", methods=["GET"])
+async def dashboard(request):
+    return HTMLResponse("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport"
+            content="width=device-width, initial-scale=1">
+      <title>Restaurant Health Checker</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #f5f7fb;
+          padding: 24px;
+        }
+        main {
+          max-width: 500px;
+          margin: 40px auto;
+          background: white;
+          padding: 24px;
+          border-radius: 16px;
+        }
+        input, button {
+          width: 100%;
+          padding: 12px;
+          margin-top: 12px;
+          box-sizing: border-box;
+        }
+        button {
+          background: #2563eb;
+          color: white;
+          border: none;
+          border-radius: 8px;
+        }
+      </style>
+    </head>
+    <body>
+      <main>
+        <h2>Restaurant Health Checker</h2>
+        <p>Check your restaurant website's health.</p>
+        <input id="domain" placeholder="example.com">
+        <button onclick="check()">Check Website</button>
+        <pre id="result"></pre>
+      </main>
+      <script>
+        async function check() {
+          const domain = document.getElementById("domain").value;
+          const result = document.getElementById("result");
+          result.textContent = "Checking...";
+          try {
+            const response = await fetch(
+              "/api/check?domain=" + encodeURIComponent(domain)
+            );
+            const data = await response.json();
+            result.textContent = JSON.stringify(data, null, 2);
+          } catch (error) {
+            result.textContent = "Request failed: " + error.message;
+          }
+        }
+      </script>
+    </body>
+    </html>
+    """)
+    
 mcp = FastMCP("Restaurant Health Checker")
 
 
